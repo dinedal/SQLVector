@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sql-rag"
+version = "0.1.0"
+description = "SQL-based Retrieval-Augmented Generation with SQLAlchemy backends"
+authors = [{name = "Paul Bergeron", email = "paul.d.bergeron@gmail.com"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.12"
+keywords = ["rag", "vector-search", "sqlalchemy", "duckdb", "sqlite", "embeddings", "retrieval-augmented-generation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Database",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "asyncpg>=0.30.0",
+    "build>=1.2.2.post1",
+    "sqlalchemy[asyncio]>=2.0.41",
+    "sqlite-vss>=0.1.2",
+    "tqdm>=4.67.1",
+]
+
+[project.urls]
+Repository = "https://github.com/dinedal/sql-rag"
+Issues = "https://github.com/dinedal/sql-rag/issues"
+Documentation = "https://github.com/dinedal/sql-rag/wiki"
+Changelog = "https://github.com/dinedal/sql-rag/blob/main/CHANGELOG.md"
+
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "aiosqlite>=0.19.0",
+    "sqlite-vss>=0.1.2",
+]
+duckdb = [
+    "duckdb>=1.3.0",
+    "polars>=1.15.0",
+    "numpy>=1.21.0",
+    "pyarrow>=10.0.0",
+    "duckdb-engine>=0.17.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
