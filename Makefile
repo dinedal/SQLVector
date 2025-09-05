@@ -132,6 +132,12 @@ release-github-auto: check-tools check-auth tag ## Create and publish GitHub rel
 		echo "$(YELLOW)Release cancelled$(NC)"; \
 	fi
 
+.PHONY: sync-version
+sync-version: ## Sync pyproject.toml with VERSION file
+	@echo "Syncing version $(VERSION) to pyproject.toml..."
+	@sed -i.bak 's/version = "[0-9]*\.[0-9]*\.[0-9]*"/version = "$(VERSION)"/' pyproject.toml && rm pyproject.toml.bak
+	@echo "$(GREEN)Version synced to $(VERSION)$(NC)"
+
 .PHONY: bump-version
 bump-version: ## Bump version (specify TYPE=patch|minor|major)
 	@if [ -z "$(TYPE)" ]; then \
@@ -146,7 +152,7 @@ bump-version: ## Bump version (specify TYPE=patch|minor|major)
 	}'); \
 	echo "New version: $$NEW_VERSION"; \
 	echo $$NEW_VERSION > VERSION; \
-	sed -i.bak 's/version = "$(VERSION)"/version = "'$$NEW_VERSION'"/' pyproject.toml && rm pyproject.toml.bak; \
+	sed -i.bak 's/version = "[0-9]*\.[0-9]*\.[0-9]*"/version = "'$$NEW_VERSION'"/' pyproject.toml && rm pyproject.toml.bak; \
 	echo "$(GREEN)Version bumped to $$NEW_VERSION$(NC)"; \
 	echo "$(YELLOW)Don't forget to update CHANGELOG.md$(NC)"
 
