@@ -1,10 +1,10 @@
 # Synchronous Engine Support for SQL RAG
 
-This document describes the new synchronous engine support added to the sql_rag library, enabling compatibility with sync-only databases like DuckDB.
+This document describes the new synchronous engine support added to the sqlvector library, enabling compatibility with sync-only databases like DuckDB.
 
 ## Overview
 
-The sql_rag library now supports both asynchronous and synchronous SQLAlchemy engines:
+The sqlvector library now supports both asynchronous and synchronous SQLAlchemy engines:
 
 - **Async Support** (existing): For databases with async drivers like PostgreSQL with asyncpg, SQLite with aiosqlite
 - **Sync Support** (new): For databases with sync-only drivers like DuckDB, regular SQLite, MySQL, etc.
@@ -25,7 +25,7 @@ The sql_rag library now supports both asynchronous and synchronous SQLAlchemy en
 #### Synchronous Usage (NEW)
 ```python
 from sqlalchemy import create_engine
-from sql_rag import SyncSQLRAG
+from sqlvector import SyncSQLRAG
 
 # Create sync engine for DuckDB
 engine = create_engine("duckdb:///mydb.db")
@@ -44,7 +44,7 @@ results = rag.query("Hello", top_k=5)
 #### Asynchronous Usage (EXISTING - unchanged)
 ```python
 from sqlalchemy.ext.asyncio import create_async_engine
-from sql_rag import SQLRAG
+from sqlvector import SQLRAG
 
 # Create async engine
 engine = create_async_engine("sqlite+aiosqlite:///mydb.db")
@@ -90,12 +90,12 @@ Previously, DuckDB users had to use the specialized `DuckDBRAG` backend:
 
 ```python
 # Old way (still works)
-from sql_rag.backends.duckdb import DuckDBRAG
+from sqlvector.backends.duckdb import DuckDBRAG
 rag = DuckDBRAG(db_path="mydb.db")
 
 # New way (unified interface)
 from sqlalchemy import create_engine
-from sql_rag import SyncSQLRAG
+from sqlvector import SyncSQLRAG
 engine = create_engine("duckdb:///mydb.db")
 rag = SyncSQLRAG(engine=engine)
 ```
@@ -105,7 +105,7 @@ Any database that only has synchronous SQLAlchemy drivers can now use the main i
 
 ```python
 from sqlalchemy import create_engine
-from sql_rag import SyncSQLRAG
+from sqlvector import SyncSQLRAG
 
 # Works with any sync SQLAlchemy-supported database
 engine = create_engine("your-database-url")

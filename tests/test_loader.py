@@ -2,9 +2,9 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from sql_rag.loader import LoaderInterface, DocumentData
-from sql_rag.models import Document, Embedding
-from sql_rag.exceptions import LoaderError
+from sqlvector.loader import LoaderInterface, DocumentData
+from sqlvector.models import Document, Embedding
+from sqlvector.exceptions import LoaderError
 
 
 class TestDocumentData:

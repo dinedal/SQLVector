@@ -4,8 +4,8 @@ import pytest
 import tempfile
 from pathlib import Path
 
-from sql_rag.backends.duckdb import DuckDBRAG
-from sql_rag.exceptions import LoaderError
+from sqlvector.backends.duckdb import DuckDBRAG
+from sqlvector.exceptions import LoaderError
 
 
 class TestDuckDBVSS:

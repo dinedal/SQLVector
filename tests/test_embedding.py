@@ -1,11 +1,11 @@
 import pytest
 from typing import List
-from sql_rag.embedding import (
+from sqlvector.embedding import (
     EmbeddingProvider,
     DefaultEmbeddingProvider,
     EmbeddingService,
 )
-from sql_rag.exceptions import EmbeddingError
+from sqlvector.exceptions import EmbeddingError
 
 
 class MockEmbeddingProvider(EmbeddingProvider):

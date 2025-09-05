@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sql-rag"
+name = "sqlvector"
 version = "0.1.0"
-description = "SQL-based Retrieval-Augmented Generation with SQLAlchemy backends"
+description = "A flexible RAG library using SQL databases as vector stores through SQLAlchemy"
 authors = [{name = "Paul Bergeron", email = "paul.d.bergeron@gmail.com"}]
 license = {text = "MIT"}
 readme = "README.md"

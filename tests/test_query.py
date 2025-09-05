@@ -1,10 +1,10 @@
 import pytest
 from sqlalchemy import select
 
-from sql_rag.query import QueryInterface
-from sql_rag.loader import LoaderInterface, DocumentData
-from sql_rag.models import Document, Embedding
-from sql_rag.exceptions import QueryError
+from sqlvector.query import QueryInterface
+from sqlvector.loader import LoaderInterface, DocumentData
+from sqlvector.models import Document, Embedding
+from sqlvector.exceptions import QueryError
 
 
 

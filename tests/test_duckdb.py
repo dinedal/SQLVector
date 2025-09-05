@@ -5,12 +5,12 @@ import tempfile
 import polars as pl
 from pathlib import Path
 
-from sql_rag.backends.duckdb import (
+from sqlvector.backends.duckdb import (
     DuckDBRAG, 
     DuckDBConfig, 
     DuckDBDocument
 )
-from sql_rag.embedding import DefaultEmbeddingProvider
+from sqlvector.embedding import DefaultEmbeddingProvider
 # QueryResult removed - using raw dictionaries
 
 

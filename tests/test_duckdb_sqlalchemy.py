@@ -5,8 +5,8 @@ import tempfile
 from pathlib import Path
 from sqlalchemy import create_engine
 
-from sql_rag.backends.duckdb import DuckDBRAG, DuckDBConfig
-from sql_rag.embedding import DefaultEmbeddingProvider
+from sqlvector.backends.duckdb import DuckDBRAG, DuckDBConfig
+from sqlvector.embedding import DefaultEmbeddingProvider
 
 
 class TestDuckDBSQLAlchemy:

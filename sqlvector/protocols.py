@@ -1,4 +1,4 @@
-"""Protocol definitions for sql_rag interfaces."""
+"""Protocol definitions for SQLVector interfaces."""
 
 from typing import List, Dict, Any, Optional, Union, Protocol, runtime_checkable
 from pathlib import Path

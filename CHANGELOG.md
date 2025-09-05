@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to SQL-RAG will be documented in this file.
+All notable changes to SQLVector will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2025-09-03
 
 ### Added
-- Initial release of SQL-RAG
+- Initial release of SQLVector
 - Core RAG functionality with SQLAlchemy backend support
 - DuckDB backend with HNSW indexing support
 - SQLite backend with VSS extension support
@@ -44,5 +44,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Faiss-based indexing
   - Binary embedding storage
 
-[Unreleased]: https://github.com/dinedal/sql-rag/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/dinedal/sql-rag/releases/tag/v0.1.0
+[Unreleased]: https://github.com/dinedal/sqlvector/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/dinedal/sqlvector/releases/tag/v0.1.0

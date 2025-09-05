@@ -23,8 +23,8 @@ def configure_logging(level: Optional[str] = None) -> None:
     if level not in valid_levels:
         level = "INFO"
 
-    # Configure the root logger for the sql_rag package
-    logger = logging.getLogger("sql_rag")
+    # Configure the root logger for the sqlvector package
+    logger = logging.getLogger("sqlvector")
 
     # Only configure if not already configured (avoid duplicate handlers)
     if not logger.handlers:
@@ -58,8 +58,8 @@ def get_logger(name: str) -> logging.Logger:
     Returns:
         A configured logger instance
     """
-    # Ensure name is under the sql_rag namespace
-    if not name.startswith("sql_rag"):
-        name = f"sql_rag.{name}"
+    # Ensure name is under the sqlvector namespace
+    if not name.startswith("sqlvector"):
+        name = f"sqlvector.{name}"
 
     return logging.getLogger(name)

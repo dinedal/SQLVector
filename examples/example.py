@@ -5,11 +5,11 @@ import sys
 import os
 from typing import List
 
-# Add parent directory to path to import sql_rag
+# Add parent directory to path to import sqlvector
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy.ext.asyncio import create_async_engine
-from sql_rag import SQLRAG, EmbeddingProvider
+from sqlvector import SQLRAG, EmbeddingProvider
 
 
 class CustomEmbeddingProvider(EmbeddingProvider):

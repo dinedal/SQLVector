@@ -5,13 +5,13 @@ import tempfile
 import json
 from pathlib import Path
 
-from sql_rag.backends.sqlite import (
+from sqlvector.backends.sqlite import (
     SQLiteRAG, 
     SQLiteConfig, 
     SQLiteDocument,
     SQLiteEmbedding
 )
-from sql_rag.embedding import DefaultEmbeddingProvider
+from sqlvector.embedding import DefaultEmbeddingProvider
 
 
 class TestSQLiteConfig:
@@ -555,7 +555,7 @@ class TestSQLiteIndexManagement:
     
     def test_index_creation_without_vss(self, sqlite_rag_instance):
         """Test index creation fails gracefully when VSS is not enabled."""
-        from sql_rag.exceptions import LoaderError
+        from sqlvector.exceptions import LoaderError
         
         with pytest.raises(LoaderError, match="VSS extension is not enabled"):
             sqlite_rag_instance.create_index("test_index")
@@ -586,7 +586,7 @@ class TestSQLiteIndexManagement:
             assert delete_result is True
         else:
             # If VSS not available, test that LoaderError is raised
-            from sql_rag.exceptions import LoaderError
+            from sqlvector.exceptions import LoaderError
             
             with pytest.raises(LoaderError):
                 vss_rag.create_index("test_index")

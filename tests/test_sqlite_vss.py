@@ -5,8 +5,8 @@ import tempfile
 from pathlib import Path
 import sqlite3
 
-from sql_rag.backends.sqlite import SQLiteRAG
-from sql_rag.exceptions import LoaderError
+from sqlvector.backends.sqlite import SQLiteRAG
+from sqlvector.exceptions import LoaderError
 
 # Check if sqlite-vss is available
 def is_vss_available():

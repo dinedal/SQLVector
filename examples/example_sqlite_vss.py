@@ -6,11 +6,11 @@ from pathlib import Path
 import sys
 import os
 
-# Add parent directory to path to import sql_rag
+# Add parent directory to path to import sqlvector
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from sql_rag.backends.sqlite import SQLiteRAG
-from sql_rag.embedding import DefaultEmbeddingProvider
+from sqlvector.backends.sqlite import SQLiteRAG
+from sqlvector.embedding import DefaultEmbeddingProvider
 
 
 def main():
@@ -206,7 +206,7 @@ def main():
         if results_vss:
             # Use the embedding from a previous result
             # Need to deserialize the embedding from blob format
-            from sql_rag.backends.sqlite.models import SQLiteEmbedding
+            from sqlvector.backends.sqlite.models import SQLiteEmbedding
             embedding_blob = results_vss[0].get('embedding')
             if embedding_blob:
                 query_embedding = SQLiteEmbedding._deserialize_embedding(embedding_blob)

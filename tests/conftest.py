@@ -3,8 +3,8 @@ import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 from sqlalchemy.pool import StaticPool
 
-from sql_rag import SQLRAG, RAGConfig, EmbeddingService, DefaultEmbeddingProvider
-from sql_rag.models import Base
+from sqlvector import SQLRAG, RAGConfig, EmbeddingService, DefaultEmbeddingProvider
+from sqlvector.models import Base
 
 
 @pytest.fixture

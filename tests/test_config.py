@@ -2,8 +2,8 @@ import pytest
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 from sqlalchemy.pool import StaticPool
 
-from sql_rag.config import RAGConfig
-from sql_rag.exceptions import ConfigurationError
+from sqlvector.config import RAGConfig
+from sqlvector.exceptions import ConfigurationError
 
 
 class TestRAGConfig:

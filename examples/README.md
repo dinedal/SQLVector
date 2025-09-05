@@ -1,11 +1,11 @@
-# SQL-RAG Examples
+# SQLVector Examples
 
-This directory contains example scripts demonstrating various features and use cases of SQL-RAG.
+This directory contains example scripts demonstrating various features and use cases of SQLVector.
 
 ## Basic Examples
 
 ### example.py
-Basic usage of SQL-RAG with SQLite backend, demonstrating:
+Basic usage of SQLVector with SQLite backend, demonstrating:
 - Document loading and embedding
 - Similarity search queries
 - Batch operations
@@ -62,13 +62,13 @@ Using the synchronous interface with DuckDB:
 
 ## Running the Examples
 
-1. Install SQL-RAG with the appropriate backend support:
+1. Install SQLVector with the appropriate backend support:
 ```bash
 # For DuckDB examples
-pip install "sql-rag[duckdb]"
+pip install "sqlvector[duckdb]"
 
 # For basic SQLite examples
-pip install sql-rag
+pip install sqlvector
 
 # For development (all backends)
 pip install -e ".[duckdb,test]"

@@ -2,9 +2,9 @@ import pytest
 from sqlalchemy import select
 from typing import List
 
-from sql_rag import SQLRAG, EmbeddingProvider
-from sql_rag.models import Document, Embedding
-from sql_rag.exceptions import ConfigurationError
+from sqlvector import SQLRAG, EmbeddingProvider
+from sqlvector.models import Document, Embedding
+from sqlvector.exceptions import ConfigurationError
 
 
 class CustomTestEmbeddingProvider(EmbeddingProvider):

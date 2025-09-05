@@ -1,6 +1,6 @@
-# Contributing to SQL-RAG
+# Contributing to SQLVector
 
-First off, thank you for considering contributing to SQL-RAG! It's people like you that make SQL-RAG such a great tool.
+First off, thank you for considering contributing to SQLVector! It's people like you that make SQLVector such a great tool.
 
 ## Code of Conduct
 
@@ -23,7 +23,7 @@ Before creating bug reports, please check existing issues as you might find out 
 - **Provide specific examples to demonstrate the steps**
 - **Describe the behavior you observed after following the steps**
 - **Explain which behavior you expected to see instead and why**
-- **Include Python version, SQL-RAG version, and backend being used**
+- **Include Python version, SQLVector version, and backend being used**
 
 ### Suggesting Enhancements
 
@@ -57,8 +57,8 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 1. **Fork and clone the repository**
 
 ```bash
-git clone https://github.com/your-username/sql-rag.git
-cd sql-rag
+git clone https://github.com/your-username/sqlvector.git
+cd sqlvector
 ```
 
 2. **Create a virtual environment**
@@ -92,7 +92,7 @@ pre-commit install
 pytest
 
 # Run with coverage
-pytest --cov=sql_rag tests/
+pytest --cov=sqlvector tests/
 
 # Run specific test file
 pytest tests/test_duckdb.py
@@ -183,8 +183,8 @@ Use absolute imports for clarity.
 ## Project Structure
 
 ```
-sql-rag/
-├── sql_rag/              # Main package
+sqlvector/
+├── sqlvector/              # Main package
 │   ├── __init__.py       # Package initialization and exports
 │   ├── config.py         # Configuration classes
 │   ├── embedding.py      # Embedding providers
@@ -207,8 +207,8 @@ sql-rag/
 
 When adding a new backend:
 
-1. Create a new directory under `sql_rag/backends/`
-2. Implement the required protocols from `sql_rag/protocols.py`
+1. Create a new directory under `sqlvector/backends/`
+2. Implement the required protocols from `sqlvector/protocols.py`
 3. Add configuration class extending `DatabaseConfig`
 4. Add comprehensive tests in `tests/test_<backend>.py`
 5. Update README.md with backend-specific documentation
@@ -257,4 +257,4 @@ Fixes #123
 
 Feel free to open an issue with your question or reach out through GitHub Discussions.
 
-Thank you for contributing to SQL-RAG! 🎉
+Thank you for contributing to SQLVector! 🎉

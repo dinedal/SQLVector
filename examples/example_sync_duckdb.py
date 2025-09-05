@@ -3,11 +3,11 @@
 import sys
 import os
 
-# Add parent directory to path to import sql_rag
+# Add parent directory to path to import sqlvector
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy import create_engine
-from sql_rag import SyncSQLRAG
+from sqlvector import SyncSQLRAG
 
 
 def cleanup_duckdb_files(db_path: str) -> None:

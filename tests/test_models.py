@@ -1,6 +1,6 @@
 import pytest
 import json
-from sql_rag.models import Document, Embedding
+from sqlvector.models import Document, Embedding
 
 
 class TestDocument:

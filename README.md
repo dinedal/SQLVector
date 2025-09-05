@@ -1,10 +1,10 @@
-# SQL-RAG
+# SQLVector
 
 A flexible and efficient Retrieval-Augmented Generation (RAG) library that uses SQL databases as vector stores through SQLAlchemy. Supports multiple backends including DuckDB with HNSW indexing and SQLite with VSS (Vector Similarity Search).
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://github.com/dinedal/sql-rag/actions/workflows/tests.yml/badge.svg)](https://github.com/dinedal/sql-rag/actions/workflows/tests.yml)
+[![Tests](https://github.com/dinedal/sqlvector/actions/workflows/tests.yml/badge.svg)](https://github.com/dinedal/sqlvector/actions/workflows/tests.yml)
 
 ## Features
 
@@ -22,20 +22,20 @@ A flexible and efficient Retrieval-Augmented Generation (RAG) library that uses 
 ### Basic Installation
 
 ```bash
-pip install sql-rag
+pip install sqlvector
 ```
 
 ### With DuckDB Support
 
 ```bash
-pip install "sql-rag[duckdb]"
+pip install "sqlvector[duckdb]"
 ```
 
 ### With SQLite Async Support
 
 ```bash
 # For async SQLite support
-pip install sql-rag aiosqlite sqlalchemy
+pip install sqlvector aiosqlite sqlalchemy
 ```
 
 ### With Custom Embedding Providers
@@ -44,20 +44,20 @@ If you want to use custom embedding providers (e.g., with Sentence Transformers)
 
 ```bash
 # For Sentence Transformers based embeddings
-pip install sql-rag transformers sentence-transformers torch
+pip install sqlvector transformers sentence-transformers torch
 ```
 
 ### With Test Dependencies
 
 ```bash
-pip install "sql-rag[test]"
+pip install "sqlvector[test]"
 ```
 
 ### Development Installation
 
 ```bash
-git clone https://github.com/dinedal/sql-rag.git
-cd sql-rag
+git clone https://github.com/dinedal/sqlvector.git
+cd sqlvector
 pip install -e ".[duckdb,test]"
 ```
 
@@ -68,7 +68,7 @@ pip install -e ".[duckdb,test]"
 ```python
 import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine
-from sql_rag import SQLRAG, EmbeddingProvider
+from sqlvector import SQLRAG, EmbeddingProvider
 from sentence_transformers import SentenceTransformer
 from typing import List
 import torch
@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
 ```python
 from sqlalchemy import create_engine
-from sql_rag import SyncSQLRAG
+from sqlvector import SyncSQLRAG
 
 # Create sync engine
 engine = create_engine("sqlite:///example.db")
@@ -180,7 +180,7 @@ results = rag.query("search term", top_k=5)
 ### DuckDB with HNSW Indexing
 
 ```python
-from sql_rag.backends.duckdb import DuckDBConfig, DuckDBRAG
+from sqlvector.backends.duckdb import DuckDBConfig, DuckDBRAG
 
 config = DuckDBConfig(
     connection_string="duckdb:///rag.duckdb",
@@ -200,7 +200,7 @@ rag = DuckDBRAG(config=config)
 ### SQLite with VSS Extension
 
 ```python
-from sql_rag.backends.sqlite import SQLiteConfig, SQLiteRAG
+from sqlvector.backends.sqlite import SQLiteConfig, SQLiteRAG
 
 config = SQLiteConfig(
     connection_string="sqlite:///rag.db",
@@ -249,7 +249,7 @@ data = rag.export_documents(include_embeddings=False)
 
 ## Architecture
 
-SQL-RAG uses a protocol-based architecture that allows for flexible backend implementations:
+SQLVector uses a protocol-based architecture that allows for flexible backend implementations:
 
 - **Protocols**: Define interfaces for backends (`RAGSystemProtocol`, `DocumentLoaderProtocol`, `DocumentQuerierProtocol`)
 - **Backends**: Pluggable database backends with specific optimizations
@@ -276,7 +276,7 @@ pytest tests/test_duckdb.py
 pytest tests/test_sqlite.py
 
 # Run with coverage
-pytest --cov=sql_rag tests/
+pytest --cov=sqlvector tests/
 ```
 
 ## Contributing
@@ -303,13 +303,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Citation
 
-If you use SQL-RAG in your research, please cite:
+If you use SQLVector in your research, please cite:
 
 ```bibtex
-@software{sql-rag,
-  title = {SQL-RAG: SQL-based Retrieval-Augmented Generation},
+@software{sqlvector,
+  title = {SQLVector: SQL-based Retrieval-Augmented Generation},
   year = {2025},
-  url = {https://github.com/dinedal/sql-rag}
+  url = {https://github.com/dinedal/sqlvector}
 }
 ```
 
@@ -321,6 +321,6 @@ If you use SQL-RAG in your research, please cite:
 
 ## Support
 
-- =� [Documentation](https://github.com/dinedal/sql-rag/wiki)
-- = [Issue Tracker](https://github.com/dinedal/sql-rag/issues)
-- =� [Discussions](https://github.com/dinedal/sql-rag/discussions)
+- =� [Documentation](https://github.com/dinedal/sqlvector/wiki)
+- = [Issue Tracker](https://github.com/dinedal/sqlvector/issues)
+- =� [Discussions](https://github.com/dinedal/sqlvector/discussions)
