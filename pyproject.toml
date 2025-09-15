@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sqlvector"
-version = "0.1.2"
+version = "0.2.0"
 description = "A flexible RAG library using SQL databases as vector stores through SQLAlchemy"
 authors = [{name = "Paul Bergeron", email = "paul.d.bergeron@gmail.com"}]
 license = {text = "MIT"}

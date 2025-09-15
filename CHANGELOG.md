@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-09-15
+
+### Added
+- **PostgreSQL backend** with pgvector extension support
+- Complete async and synchronous PostgreSQL RAG implementations (`PostgresRAG` class)
+- Auto-managed Docker testing infrastructure with PostgreSQL + pgvector containers
+- Comprehensive PostgreSQL test suite with integration and unit tests
+- PostgreSQL example scripts demonstrating sync and async usage patterns
+- Docker Compose configuration for testing environments
+- Custom table name support for PostgreSQL backend
+
+### Features
+- **pgvector integration**: Native PostgreSQL vector operations with pgvector extension
+- **Advanced indexing**: Support for both HNSW and IVFFlat indexing strategies
+- **Connection pooling**: Efficient asyncpg-based connection management
+- **JSONB metadata filtering**: Advanced querying capabilities with PostgreSQL's JSONB support
+- **Batch operations**: Optimized bulk loading and querying for PostgreSQL
+- **Zero-setup testing**: Automatic Docker container management for PostgreSQL tests
+- **Health checking**: Robust container startup and readiness verification
+
+### Backend Support
+- **PostgreSQL**: Enterprise-grade database with native vector operations
+  - pgvector extension for efficient vector storage and similarity search
+  - HNSW and IVFFlat index support for scalable vector operations
+  - AsyncPG driver integration for high-performance async operations
+  - SQLAlchemy ORM integration with PostgreSQL-specific optimizations
+  - JSONB metadata storage and advanced filtering capabilities
+  - Custom table name configuration for flexible deployment scenarios
+
+### Testing Infrastructure
+- **Auto-managed PostgreSQL containers**: Tests automatically start and manage PostgreSQL + pgvector Docker containers
+- **Container reuse**: Efficient testing with persistent containers across test sessions
+- **Docker detection**: Graceful fallback when Docker is not available
+- **Custom database support**: Override with existing PostgreSQL instances via environment variables
+
 ## [0.1.0] - 2025-09-03
 
 ### Added
@@ -44,5 +79,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Faiss-based indexing
   - Binary embedding storage
 
-[Unreleased]: https://github.com/dinedal/sqlvector/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/dinedal/sqlvector/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/dinedal/sqlvector/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/dinedal/sqlvector/releases/tag/v0.1.0
