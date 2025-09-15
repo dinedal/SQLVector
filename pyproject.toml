@@ -51,6 +51,10 @@ duckdb = [
     "pyarrow>=10.0.0",
     "duckdb-engine>=0.17.0",
 ]
+postgres = [
+    "psycopg2-binary>=2.9.0",
+    "pgvector>=0.3.0",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -58,3 +62,8 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+markers = [
+    "postgres: mark test as requiring PostgreSQL database",
+    "integration: mark test as integration test requiring external dependencies"
+]
+addopts = "--strict-markers"

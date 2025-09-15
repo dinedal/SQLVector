@@ -95,7 +95,7 @@ class PostgresEmbedding:
 class PostgresQueryResult:
     """Query result model for PostgreSQL backend."""
     
-    document_id: str
+    id: str
     content: str
     similarity: float
     metadata: Optional[Dict[str, Any]] = None
@@ -104,13 +104,14 @@ class PostgresQueryResult:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         result = {
-            "document_id": self.document_id,
+            "id": self.id,
             "content": self.content,
             "similarity": self.similarity,
         }
         
         if self.metadata:
-            result["metadata"] = self.metadata
+            # Return metadata as JSON string for consistency with other backends
+            result["metadata"] = json.dumps(self.metadata)
         
         if self.embedding:
             result["embedding"] = self.embedding
@@ -132,7 +133,7 @@ class PostgresQueryResult:
             embedding = PostgresEmbedding.parse_vector(row["embedding"])
         
         return cls(
-            document_id=row["document_id"],
+            id=row["id"],
             content=row["content"],
             similarity=float(row["similarity"]),
             metadata=metadata,

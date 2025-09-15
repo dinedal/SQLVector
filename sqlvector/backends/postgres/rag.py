@@ -11,6 +11,10 @@ from .querier import PostgresQuerier
 from .models import PostgresDocument, PostgresEmbedding
 
 
+# Import the centralized event loop management function
+from .event_loop_utils import run_async_in_sync
+
+
 class PostgresRAG:
     """High-performance RAG system using PostgreSQL with pgvector.
     
@@ -60,6 +64,9 @@ class PostgresRAG:
         # Connection pool settings
         pool_min_size: int = 2,
         pool_max_size: int = 10,
+        # Connection management
+        max_total_connections: Optional[int] = None,
+        connection_timeout: float = 30.0,
     ):
         """Initialize PostgreSQL RAG system."""
         # Validate parameters
@@ -93,6 +100,8 @@ class PostgresRAG:
             embeddings_column=embeddings_column,
             pool_min_size=pool_min_size,
             pool_max_size=pool_max_size,
+            max_total_connections=max_total_connections,
+            connection_timeout=connection_timeout,
         )
 
         self.embedding_service = EmbeddingService(
@@ -103,18 +112,37 @@ class PostgresRAG:
         self.loader = PostgresLoader(self.config, self.embedding_service)
         self.querier = PostgresQuerier(self.config, self.embedding_service)
 
-        # Initialize database schema
-        self._initialize_database()
+        # Database will be initialized lazily when first async method is called
+        self._db_initialized = False
+        self._db_init_lock = asyncio.Lock()
 
-    def _initialize_database(self) -> None:
-        """Initialize the database schema."""
-        # Run async initialization
-        asyncio.run(self._initialize_database_async())
-    
     async def _initialize_database_async(self) -> None:
         """Initialize the database schema asynchronously."""
         async with self.config.get_async_connection() as conn:
             await self.config.setup_database(conn)
+        self._db_initialized = True
+    
+    async def _ensure_database_initialized(self) -> None:
+        """Ensure database is initialized before operations."""
+        if self._db_initialized:
+            return
+        
+        # Use lock to prevent race conditions during initialization
+        async with self._db_init_lock:
+            # Double-check after acquiring lock (another task might have initialized)
+            if self._db_initialized:
+                return
+            
+            # Initialize database schema
+            await self._initialize_database_async()
+    
+    def _ensure_database_initialized_sync(self) -> None:
+        """Ensure database is initialized before sync operations."""
+        if self._db_initialized:
+            return
+        
+        # Use the helper function to handle async-in-sync properly
+        run_async_in_sync(lambda: self._ensure_database_initialized())
 
     # Document Loading Methods
     def load_document(
@@ -125,6 +153,7 @@ class PostgresRAG:
         generate_embedding: bool = True,
     ) -> str:
         """Load a single document."""
+        self._ensure_database_initialized_sync()
         return self.loader.load_document(
             content=content,
             metadata=metadata,
@@ -140,6 +169,7 @@ class PostgresRAG:
         generate_embedding: bool = True,
     ) -> str:
         """Load a single document asynchronously."""
+        await self._ensure_database_initialized()
         return await self.loader.load_document_async(
             content=content,
             metadata=metadata,
@@ -154,6 +184,7 @@ class PostgresRAG:
         show_progress: bool = True,
     ) -> List[str]:
         """Load multiple documents efficiently."""
+        self._ensure_database_initialized_sync()
         return self.loader.load_documents_batch(
             documents=documents,
             generate_embeddings=generate_embeddings,
@@ -167,6 +198,7 @@ class PostgresRAG:
         show_progress: bool = True,
     ) -> List[str]:
         """Load multiple documents efficiently asynchronously."""
+        await self._ensure_database_initialized()
         return await self.loader.load_documents_batch_async(
             documents=documents,
             generate_embeddings=generate_embeddings,
@@ -174,28 +206,34 @@ class PostgresRAG:
         )
 
     # Document Retrieval Methods
-    def get_document(self, document_id: str) -> Optional[Dict[str, Any]]:
+    def get_document(self, document_id: str) -> Optional[PostgresDocument]:
         """Get a single document by ID."""
+        self._ensure_database_initialized_sync()
         return self.loader.get_document(document_id)
     
-    async def get_document_async(self, document_id: str) -> Optional[Dict[str, Any]]:
+    async def get_document_async(self, document_id: str) -> Optional[PostgresDocument]:
         """Get a single document by ID asynchronously."""
+        await self._ensure_database_initialized()
         return await self.loader.get_document_async(document_id)
 
-    def get_documents(self, document_ids: List[str]) -> List[Dict[str, Any]]:
+    def get_documents(self, document_ids: List[str]) -> List[PostgresDocument]:
         """Get multiple documents by IDs."""
+        self._ensure_database_initialized_sync()
         return self.loader.get_documents_batch(document_ids)
     
-    async def get_documents_async(self, document_ids: List[str]) -> List[Dict[str, Any]]:
+    async def get_documents_async(self, document_ids: List[str]) -> List[PostgresDocument]:
         """Get multiple documents by IDs asynchronously."""
+        await self._ensure_database_initialized()
         return await self.loader.get_documents_batch_async(document_ids)
 
     def delete_document(self, document_id: str) -> bool:
         """Delete a document and its embeddings."""
+        self._ensure_database_initialized_sync()
         return self.loader.delete_document(document_id)
     
     async def delete_document_async(self, document_id: str) -> bool:
         """Delete a document and its embeddings asynchronously."""
+        await self._ensure_database_initialized()
         return await self.loader.delete_document_async(document_id)
 
     # Index Management Methods
@@ -206,6 +244,7 @@ class PostgresRAG:
         **kwargs
     ) -> bool:
         """Create an index on embeddings."""
+        self._ensure_database_initialized_sync()
         return self.loader.create_index(
             index_name=index_name,
             similarity_function=similarity_function,
@@ -219,6 +258,7 @@ class PostgresRAG:
         **kwargs
     ) -> bool:
         """Create an index on embeddings asynchronously."""
+        await self._ensure_database_initialized()
         return await self.loader.create_index_async(
             index_name=index_name,
             similarity_function=similarity_function,
@@ -227,10 +267,12 @@ class PostgresRAG:
 
     def delete_index(self, index_name: str) -> bool:
         """Delete an existing index."""
+        self._ensure_database_initialized_sync()
         return self.loader.delete_index(index_name)
     
     async def delete_index_async(self, index_name: str) -> bool:
         """Delete an existing index asynchronously."""
+        await self._ensure_database_initialized()
         return await self.loader.delete_index_async(index_name)
 
     # Query Methods
@@ -243,6 +285,7 @@ class PostgresRAG:
         **kwargs
     ) -> List[Dict[str, Any]]:
         """Query documents by similarity to query text."""
+        self._ensure_database_initialized_sync()
         return self.querier.query(
             query_text=query_text,
             top_k=top_k,
@@ -260,6 +303,7 @@ class PostgresRAG:
         **kwargs
     ) -> List[Dict[str, Any]]:
         """Query documents by similarity to query text asynchronously."""
+        await self._ensure_database_initialized()
         return await self.querier.query_async(
             query_text=query_text,
             top_k=top_k,
@@ -277,6 +321,7 @@ class PostgresRAG:
         **kwargs
     ) -> List[Dict[str, Any]]:
         """Query using a precomputed embedding vector."""
+        self._ensure_database_initialized_sync()
         return self.querier.query_with_precomputed_embedding(
             query_embedding=query_embedding,
             top_k=top_k,
@@ -294,6 +339,7 @@ class PostgresRAG:
         **kwargs
     ) -> List[Dict[str, Any]]:
         """Query using a precomputed embedding vector asynchronously."""
+        await self._ensure_database_initialized()
         return await self.querier.query_with_precomputed_embedding_async(
             query_embedding=query_embedding,
             top_k=top_k,
@@ -311,6 +357,7 @@ class PostgresRAG:
         **kwargs
     ) -> List[List[Dict[str, Any]]]:
         """Query multiple texts in batch."""
+        self._ensure_database_initialized_sync()
         return self.querier.query_batch(
             query_texts=query_texts,
             top_k=top_k,
@@ -328,6 +375,7 @@ class PostgresRAG:
         **kwargs
     ) -> List[List[Dict[str, Any]]]:
         """Query multiple texts in batch asynchronously."""
+        await self._ensure_database_initialized()
         return await self.querier.query_batch_async(
             query_texts=query_texts,
             top_k=top_k,
@@ -346,6 +394,7 @@ class PostgresRAG:
         **kwargs
     ) -> List[Dict[str, Any]]:
         """Query documents with metadata filters."""
+        self._ensure_database_initialized_sync()
         return self.querier.query_by_filters(
             filters=filters,
             query_text=query_text,
@@ -365,6 +414,7 @@ class PostgresRAG:
         **kwargs
     ) -> List[Dict[str, Any]]:
         """Query documents with metadata filters asynchronously."""
+        await self._ensure_database_initialized()
         return await self.querier.query_by_filters_async(
             filters=filters,
             query_text=query_text,
@@ -383,6 +433,7 @@ class PostgresRAG:
         **kwargs
     ) -> List[Dict[str, Any]]:
         """Find documents similar to a given document."""
+        self._ensure_database_initialized_sync()
         return self.querier.get_similar_documents(
             document_id=document_id,
             top_k=top_k,
@@ -400,6 +451,7 @@ class PostgresRAG:
         **kwargs
     ) -> List[Dict[str, Any]]:
         """Find documents similar to a given document asynchronously."""
+        await self._ensure_database_initialized()
         return await self.querier.get_similar_documents_async(
             document_id=document_id,
             top_k=top_k,
@@ -411,6 +463,7 @@ class PostgresRAG:
     # Analytics and Statistics Methods
     async def get_statistics_async(self) -> Dict[str, Any]:
         """Get database statistics asynchronously."""
+        await self._ensure_database_initialized()
         async with self.config.get_async_connection() as conn:
             # Get document count
             doc_count_query = f"SELECT COUNT(*) FROM {self.config.documents_table}"
@@ -459,7 +512,8 @@ class PostgresRAG:
     
     def get_statistics(self) -> Dict[str, Any]:
         """Get database statistics."""
-        return asyncio.run(self.get_statistics_async())
+        self._ensure_database_initialized_sync()
+        return run_async_in_sync(lambda: self.get_statistics_async())
     
     async def close(self):
         """Close the connection pool."""
@@ -471,7 +525,7 @@ class PostgresRAG:
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
-        asyncio.run(self.close())
+        run_async_in_sync(lambda: self.close())
     
     async def __aenter__(self):
         """Async context manager entry."""

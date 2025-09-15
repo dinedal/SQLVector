@@ -46,6 +46,13 @@ try:
 except ImportError:
     __sqlite_available__ = False
 
+try:
+    from .backends.postgres import PostgresRAG, PostgresConfig
+
+    __postgres_available__ = True
+except ImportError:
+    __postgres_available__ = False
+
 from typing import Optional, List, Dict, Any, Any
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy import Engine
@@ -315,3 +322,7 @@ if __duckdb_available__:
 # Add SQLite exports if available
 if __sqlite_available__:
     __all__.extend(["SQLiteRAG", "SQLiteConfig"])
+
+# Add PostgreSQL exports if available
+if __postgres_available__:
+    __all__.extend(["PostgresRAG", "PostgresConfig"])

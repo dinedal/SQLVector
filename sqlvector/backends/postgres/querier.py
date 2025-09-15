@@ -1,6 +1,5 @@
 """PostgreSQL-specific querier implementation with pgvector similarity search."""
 
-import asyncio
 import json
 from typing import List, Dict, Any, Optional
 
@@ -8,10 +7,14 @@ from ...embedding import EmbeddingService
 from ...exceptions import QueryError
 from ...logger import get_logger
 from .config import PostgresConfig
-from .models import PostgresEmbedding, PostgresQueryResult
+from .models import PostgresEmbedding
 
 # Get logger for this module
 logger = get_logger(__name__)
+
+
+# Import the centralized event loop management function
+from .event_loop_utils import run_async_in_sync
 
 
 class PostgresQuerier:
@@ -54,7 +57,7 @@ class PostgresQuerier:
         **kwargs
     ) -> List[Dict[str, Any]]:
         """Query documents by similarity to query text synchronously."""
-        return asyncio.run(self.query_async(
+        return run_async_in_sync(lambda: self.query_async(
             query_text, top_k, similarity_threshold, similarity_function, **kwargs
         ))
     
@@ -79,7 +82,7 @@ class PostgresQuerier:
                     **kwargs
                 )
                 
-                return self._format_results(results)
+                return results
                 
         except Exception as e:
             raise QueryError(f"Query with embedding failed: {e}")
@@ -93,7 +96,7 @@ class PostgresQuerier:
         **kwargs
     ) -> List[Dict[str, Any]]:
         """Query using a precomputed embedding vector synchronously."""
-        return asyncio.run(self.query_with_precomputed_embedding_async(
+        return run_async_in_sync(lambda: self.query_with_precomputed_embedding_async(
             query_embedding, top_k, similarity_threshold, similarity_function, **kwargs
         ))
     
@@ -113,19 +116,19 @@ class PostgresQuerier:
         # Map similarity functions to pgvector operators and similarity calculations
         if similarity_function == "cosine":
             operator = "<=>"  # Cosine distance
-            similarity_calc = f"1 - (e.{self.config.embeddings_column} <=> $1::vector)"
+            similarity_calc = f"1 - (e.{self.config.embeddings_column} <=> :embedding::vector)"
         elif similarity_function == "euclidean":
             operator = "<->"  # L2 distance
             # Convert distance to similarity (inverse)
-            similarity_calc = f"1 / (1 + (e.{self.config.embeddings_column} <-> $1::vector))"
+            similarity_calc = f"1 / (1 + (e.{self.config.embeddings_column} <-> :embedding::vector))"
         elif similarity_function == "inner_product":
             operator = "<#>"  # Inner product (negative)
             # pgvector returns negative inner product, so negate it
-            similarity_calc = f"-(e.{self.config.embeddings_column} <#> $1::vector)"
+            similarity_calc = f"-(e.{self.config.embeddings_column} <#> :embedding::vector)"
         else:
             # Default to cosine
             operator = "<=>"
-            similarity_calc = f"1 - (e.{self.config.embeddings_column} <=> $1::vector)"
+            similarity_calc = f"1 - (e.{self.config.embeddings_column} <=> :embedding::vector)"
         
         # Build the query with optional metadata filtering
         metadata_filter = ""
@@ -140,7 +143,7 @@ class PostgresQuerier:
                     )
                 else:
                     filter_conditions.append(
-                        f"d.{self.config.documents_metadata_column}->'{key}' = '\"{ value}\"'::jsonb"
+                        f"d.{self.config.documents_metadata_column}->'{key}' = '\"{value}\"'::jsonb"
                     )
             
             if filter_conditions:
@@ -149,31 +152,29 @@ class PostgresQuerier:
         # Build the main query
         query = f"""
             SELECT 
-                d.{self.config.documents_id_column} as document_id,
+                d.{self.config.documents_id_column} as id,
                 d.{self.config.documents_content_column} as content,
-                d.{self.config.documents_metadata_column} as metadata,
+                d.{self.config.documents_metadata_column}::text as metadata,
                 e.{self.config.embeddings_column} as embedding,
                 {similarity_calc} as similarity
             FROM {self.config.embeddings_table} e
             JOIN {self.config.documents_table} d 
                 ON e.{self.config.embeddings_document_id_column} = d.{self.config.documents_id_column}
             WHERE 1=1 {metadata_filter}
-            ORDER BY e.{self.config.embeddings_column} {operator} $1::vector
-            LIMIT $2
+            ORDER BY e.{self.config.embeddings_column} {operator} :embedding::vector
+            LIMIT :top_k
         """
         
-        # Execute query
+        # Execute query with named parameters
+        params = {"embedding": embedding_str, "top_k": top_k}
+        
         if hasattr(conn, 'fetch'):
-            # asyncpg connection
-            rows = await conn.fetch(query, embedding_str, top_k)
-            results = [dict(row) for row in rows]
+            # Our wrapper connection - already returns dictionaries
+            results = await conn.fetch(query, **params)
         else:
             # SQLAlchemy connection
             from sqlalchemy import text
-            result = await conn.execute(
-                text(query),
-                {"embedding": embedding_str, "limit": top_k}
-            )
+            result = await conn.execute(text(query), params)
             results = [dict(row) for row in result.fetchall()]
         
         # Filter by similarity threshold if specified
@@ -182,13 +183,6 @@ class PostgresQuerier:
         
         return results
     
-    def _format_results(self, results: List[Any]) -> List[Dict[str, Any]]:
-        """Format query results."""
-        formatted = []
-        for row in results:
-            result = PostgresQueryResult.from_row(row)
-            formatted.append(result.to_dict())
-        return formatted
     
     async def query_batch_async(
         self,
@@ -222,7 +216,7 @@ class PostgresQuerier:
         **kwargs
     ) -> List[List[Dict[str, Any]]]:
         """Query multiple texts in batch synchronously."""
-        return asyncio.run(self.query_batch_async(
+        return run_async_in_sync(lambda: self.query_batch_async(
             query_texts, top_k, similarity_threshold, similarity_function, **kwargs
         ))
     
@@ -261,26 +255,27 @@ class PostgresQuerier:
                 
                 query = f"""
                     SELECT 
-                        {self.config.documents_id_column} as document_id,
+                        {self.config.documents_id_column} as id,
                         {self.config.documents_content_column} as content,
-                        {self.config.documents_metadata_column} as metadata,
+                        {self.config.documents_metadata_column}::text as metadata,
                         1.0 as similarity
                     FROM {self.config.documents_table}
                     WHERE {where_clause}
-                    LIMIT $1
+                    LIMIT :top_k
                 """
                 
+                params = {"top_k": top_k}
+                
                 if hasattr(conn, 'fetch'):
-                    # asyncpg connection
-                    rows = await conn.fetch(query, top_k)
-                    results = [dict(row) for row in rows]
+                    # Our wrapper connection - already returns dictionaries
+                    results = await conn.fetch(query, **params)
                 else:
                     # SQLAlchemy connection
                     from sqlalchemy import text
-                    result = await conn.execute(text(query), {"limit": top_k})
+                    result = await conn.execute(text(query), params)
                     results = [dict(row) for row in result.fetchall()]
                 
-                return self._format_results(results)
+                return results
     
     def query_by_filters(
         self,
@@ -292,7 +287,7 @@ class PostgresQuerier:
         **kwargs
     ) -> List[Dict[str, Any]]:
         """Query documents with metadata filters and optional similarity search synchronously."""
-        return asyncio.run(self.query_by_filters_async(
+        return run_async_in_sync(lambda: self.query_by_filters_async(
             filters, query_text, top_k, similarity_threshold, similarity_function, **kwargs
         ))
     
@@ -310,30 +305,40 @@ class PostgresQuerier:
             query = f"""
                 SELECT {self.config.embeddings_column} 
                 FROM {self.config.embeddings_table}
-                WHERE {self.config.embeddings_document_id_column} = $1
+                WHERE {self.config.embeddings_document_id_column} = :document_id
                 LIMIT 1
             """
             
+            params = {"document_id": document_id}
+            
             if hasattr(conn, 'fetchrow'):
-                # asyncpg connection
-                row = await conn.fetchrow(query, document_id)
+                # Our wrapper connection
+                row = await conn.fetchrow(query, **params)
             else:
                 # SQLAlchemy connection
                 from sqlalchemy import text
-                result = await conn.execute(text(query), {"doc_id": document_id})
+                result = await conn.execute(text(query), params)
                 row = result.fetchone()
             
             if not row:
                 return []
             
-            # Parse the embedding
-            embedding = PostgresEmbedding.parse_vector(row[self.config.embeddings_column])
+            # Parse the embedding - our wrappers always return dictionaries
+            embedding_data = row[self.config.embeddings_column]
+            embedding = PostgresEmbedding.parse_vector(embedding_data)
             
             # Find similar documents (excluding the source document)
-            kwargs["exclude_document_id"] = document_id
-            return await self.query_with_precomputed_embedding_async(
+            results = await self.query_with_precomputed_embedding_async(
                 embedding, top_k + 1, similarity_threshold, similarity_function, **kwargs
             )
+            
+            # Filter out the source document
+            filtered_results = [
+                result for result in results 
+                if result["id"] != document_id
+            ]
+            
+            return filtered_results[:top_k]
     
     def get_similar_documents(
         self,
@@ -344,6 +349,6 @@ class PostgresQuerier:
         **kwargs
     ) -> List[Dict[str, Any]]:
         """Find documents similar to a given document synchronously."""
-        return asyncio.run(self.get_similar_documents_async(
+        return run_async_in_sync(lambda: self.get_similar_documents_async(
             document_id, top_k, similarity_threshold, similarity_function, **kwargs
         ))

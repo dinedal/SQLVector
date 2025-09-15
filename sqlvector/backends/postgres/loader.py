@@ -1,7 +1,6 @@
 """PostgreSQL-specific loader implementation with efficient batch operations."""
 
 import uuid
-import asyncio
 import json
 from typing import List, Dict, Any, Optional, Union
 from tqdm import tqdm
@@ -14,6 +13,10 @@ from .models import PostgresDocument, PostgresEmbedding
 
 # Get logger for this module
 logger = get_logger(__name__)
+
+
+# Import the centralized event loop management function
+from .event_loop_utils import run_async_in_sync
 
 
 class PostgresLoader:
@@ -31,11 +34,12 @@ class PostgresLoader:
         generate_embedding: bool = True
     ) -> str:
         """Load a single document asynchronously."""
-        return await self.load_documents_batch_async([{
+        doc_ids = await self.load_documents_batch_async([{
             "content": content,
             "metadata": metadata,
             "document_id": document_id
-        }], generate_embeddings=generate_embedding)[0]
+        }], generate_embeddings=generate_embedding)
+        return doc_ids[0]
     
     def load_document(
         self,
@@ -45,7 +49,7 @@ class PostgresLoader:
         generate_embedding: bool = True
     ) -> str:
         """Load a single document synchronously."""
-        return asyncio.run(self.load_document_async(
+        return run_async_in_sync(lambda: self.load_document_async(
             content, metadata, document_id, generate_embedding
         ))
     
@@ -93,7 +97,7 @@ class PostgresLoader:
         show_progress: bool = True
     ) -> List[str]:
         """Load multiple documents efficiently using batch operations (sync)."""
-        return asyncio.run(self.load_documents_batch_async(
+        return run_async_in_sync(lambda: self.load_documents_batch_async(
             documents, generate_embeddings, show_progress
         ))
     
@@ -234,11 +238,17 @@ class PostgresLoader:
             from sqlalchemy import text
             await conn.execute(text(query), values)
     
-    async def get_document_async(self, document_id: str) -> Optional[Dict[str, Any]]:
+    async def get_document_async(self, document_id: str) -> Optional[PostgresDocument]:
         """Get a single document by ID asynchronously."""
         async with self.config.get_async_connection() as conn:
+            # Use explicit column selection with aliases to ensure standard field names
+            metadata_column = f", {self.config.documents_metadata_column}::text as metadata" if self.config.documents_metadata_column else ", NULL as metadata"
+            
             query = f"""
-                SELECT * FROM {self.config.documents_table}
+                SELECT 
+                    {self.config.documents_id_column} as id,
+                    {self.config.documents_content_column} as content{metadata_column}
+                FROM {self.config.documents_table}
                 WHERE {self.config.documents_id_column} = $1
             """
             
@@ -246,35 +256,41 @@ class PostgresLoader:
                 # asyncpg connection
                 row = await conn.fetchrow(query, document_id)
                 if row:
-                    return dict(row)
+                    return PostgresDocument.from_dict(dict(row))
             else:
                 # SQLAlchemy connection
                 from sqlalchemy import text
                 result = await conn.execute(text(query), {"id": document_id})
                 row = result.fetchone()
                 if row:
-                    return dict(row)
+                    return PostgresDocument.from_dict(dict(row))
             
             return None
     
-    def get_document(self, document_id: str) -> Optional[Dict[str, Any]]:
+    def get_document(self, document_id: str) -> Optional[PostgresDocument]:
         """Get a single document by ID synchronously."""
-        return asyncio.run(self.get_document_async(document_id))
+        return run_async_in_sync(lambda: self.get_document_async(document_id))
     
-    async def get_documents_batch_async(self, document_ids: List[str]) -> List[Dict[str, Any]]:
+    async def get_documents_batch_async(self, document_ids: List[str]) -> List[PostgresDocument]:
         """Get multiple documents by IDs asynchronously."""
         async with self.config.get_async_connection() as conn:
+            # Use explicit column selection with aliases to ensure standard field names
+            metadata_column = f", {self.config.documents_metadata_column}::text as metadata" if self.config.documents_metadata_column else ", NULL as metadata"
+            
             # Create parameterized placeholders
             placeholders = ','.join([f'${i+1}' for i in range(len(document_ids))])
             query = f"""
-                SELECT * FROM {self.config.documents_table}
+                SELECT 
+                    {self.config.documents_id_column} as id,
+                    {self.config.documents_content_column} as content{metadata_column}
+                FROM {self.config.documents_table}
                 WHERE {self.config.documents_id_column} IN ({placeholders})
             """
             
             if hasattr(conn, 'fetch'):
                 # asyncpg connection
                 rows = await conn.fetch(query, *document_ids)
-                return [dict(row) for row in rows]
+                return [PostgresDocument.from_dict(dict(row)) for row in rows]
             else:
                 # SQLAlchemy connection
                 from sqlalchemy import text
@@ -282,15 +298,18 @@ class PostgresLoader:
                 params = {f"id_{i}": doc_id for i, doc_id in enumerate(document_ids)}
                 placeholders_named = ','.join([f':id_{i}' for i in range(len(document_ids))])
                 query_named = f"""
-                    SELECT * FROM {self.config.documents_table}
+                    SELECT 
+                        {self.config.documents_id_column} as id,
+                        {self.config.documents_content_column} as content{metadata_column}
+                    FROM {self.config.documents_table}
                     WHERE {self.config.documents_id_column} IN ({placeholders_named})
                 """
                 result = await conn.execute(text(query_named), params)
-                return [dict(row) for row in result.fetchall()]
+                return [PostgresDocument.from_dict(dict(row)) for row in result.fetchall()]
     
-    def get_documents_batch(self, document_ids: List[str]) -> List[Dict[str, Any]]:
+    def get_documents_batch(self, document_ids: List[str]) -> List[PostgresDocument]:
         """Get multiple documents by IDs synchronously."""
-        return asyncio.run(self.get_documents_batch_async(document_ids))
+        return run_async_in_sync(lambda: self.get_documents_batch_async(document_ids))
     
     async def delete_document_async(self, document_id: str) -> bool:
         """Delete a document and its embeddings asynchronously."""
@@ -314,7 +333,7 @@ class PostgresLoader:
     
     def delete_document(self, document_id: str) -> bool:
         """Delete a document and its embeddings synchronously."""
-        return asyncio.run(self.delete_document_async(document_id))
+        return run_async_in_sync(lambda: self.delete_document_async(document_id))
     
     async def create_index_async(
         self,
@@ -360,7 +379,7 @@ class PostgresLoader:
         **kwargs
     ) -> bool:
         """Create an index on embeddings for accelerated similarity search."""
-        return asyncio.run(self.create_index_async(index_name, similarity_function, **kwargs))
+        return run_async_in_sync(lambda: self.create_index_async(index_name, similarity_function, **kwargs))
     
     async def delete_index_async(self, index_name: str) -> bool:
         """Delete an existing index asynchronously."""
@@ -385,4 +404,4 @@ class PostgresLoader:
     
     def delete_index(self, index_name: str) -> bool:
         """Delete an existing index synchronously."""
-        return asyncio.run(self.delete_index_async(index_name))
+        return run_async_in_sync(lambda: self.delete_index_async(index_name))

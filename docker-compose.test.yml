@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  postgres-test:
+    image: pgvector/pgvector:pg16
+    container_name: sqlvector-postgres-test
+    environment:
+      POSTGRES_DB: sqlvector_test
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5433:5432"  # Use non-standard port to avoid conflicts
+    volumes:
+      - ./tests/postgres_init:/docker-entrypoint-initdb.d
+      - postgres_test_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testuser -d sqlvector_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command: >
+      postgres
+      -c shared_preload_libraries=vector
+      -c log_statement=all
+      -c log_duration=on
+      -c log_min_duration_statement=0
+      -c max_connections=100
+
+volumes:
+  postgres_test_data:
+    driver: local
+
+networks:
+  default:
+    name: sqlvector-test-network
